@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+const int16_t BUFFER_SIZE = 1024;
+
 int main(int argc, char **argv) {
   // You can use print statements as follows for debugging, they'll be visible when running tests.
   std::cout << "Logs from your program will appear here!\n";
@@ -49,8 +51,28 @@ int main(int argc, char **argv) {
   
   std::cout << "Waiting for a client to connect...\n";
   
-  accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+  ssize_t client_fd = accept(server_fd, (struct sockaddr *) &client_addr, (socklen_t *) &client_addr_len);
+
+  if (client_fd < 0)
+  {
+    std::cerr << "Client failed to connect" << std::endl;
+    close(client_fd);
+    return 1;
+  }
+  
   std::cout << "Client connected\n";
+
+  std::string http_status_OK = "HTTP/1.1 200 OK\r\n\r\n";
+
+  ssize_t server_send = send(client_fd, http_status_OK.c_str(), http_status_OK.size(), 0);
+
+  if(server_send  == -1){
+    std::cerr << "Server failed to send buffer" << std::endl;
+    return -1;
+  }
+
+  std::cout << "Http status send correctly" << std::endl;
+
   
   close(server_fd);
 
