@@ -33,7 +33,15 @@ inline void ltrim(std::string &string)
                                               { return !std::isspace(ch); }));
 }
 
-std::string load_from_file(const std::string &filename, std::string & directory)
+inline void rtrim(std::string &string)
+{
+    string.erase(std::find_if(string.rbegin(), string.rend(), [](unsigned char ch)
+                         { return !std::isspace(ch); })
+                .base(),
+            string.end());
+}
+
+std::string load_from_file(const std::string &filename, std::string &directory)
 {
     std::string line;
     std::string result_body = "";
@@ -43,13 +51,16 @@ std::string load_from_file(const std::string &filename, std::string & directory)
 
     if (myfile.is_open())
     {
-        while (getline(myfile, line)){
+        while (getline(myfile, line))
+        {
             result_body += line;
             result_body += "\n";
         }
+        result_body.erase(result_body.end() - 1, result_body.end());
         myfile.close();
     }
-    else std::cout << "Unable to open file"; 
+    else
+        std::cout << "Unable to open file";
 
-    return result_body; 
+    return result_body;
 }
