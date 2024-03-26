@@ -21,11 +21,7 @@
 const int16_t BUFFER_SIZE = 1024;
 const int16_t MAX_EVENTS = 10;
 
-enum http_Code
-{
-  OK = 200,
-  NOT_FOUND = 404
-};
+enum http_Code;
 
 std::unordered_map<http_Code, std::string> HTTP_MESSAGE = {
     {OK, "HTTP/1.1 200 OK"},
@@ -133,11 +129,11 @@ bool handle_client(int client_fd, int epoll_fd, std::string & directory)
   }
   else if (command == "/files")
   {
-    code = OK;
-
     std::string filename = path_request.substr(path_request.find("/", 1) + 1);
 
-    http_body_message = load_from_file(filename, directory);
+    auto [http_body_message, code]= load_from_file(filename, directory);
+
+    std::cout << "code: " << code << std::endl;
 
     std::string size_filename_message = std::to_string(http_body_message.size());
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";

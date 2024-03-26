@@ -3,6 +3,13 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include <tuple>
+
+enum http_Code
+{
+    OK = 200,
+    NOT_FOUND = 404
+};
 
 std::vector<std::string> split_string(const std::string_view &string, const std::string_view &delimiter)
 {
@@ -36,12 +43,12 @@ inline void ltrim(std::string &string)
 inline void rtrim(std::string &string)
 {
     string.erase(std::find_if(string.rbegin(), string.rend(), [](unsigned char ch)
-                         { return !std::isspace(ch); })
-                .base(),
-            string.end());
+                              { return !std::isspace(ch); })
+                     .base(),
+                 string.end());
 }
 
-std::string load_from_file(const std::string &filename, std::string &directory)
+std::tuple<std::string, http_Code> load_from_file(const std::string &filename, std::string &directory)
 {
     std::string line;
     std::string result_body = "";
@@ -58,9 +65,8 @@ std::string load_from_file(const std::string &filename, std::string &directory)
         }
         result_body.erase(result_body.end() - 1, result_body.end());
         myfile.close();
+        return {result_body, OK};
     }
-    else
-        std::cout << "Unable to open file";
-
-    return result_body;
+    std::cout << "Unable to open file";
+    return {result_body, NOT_FOUND};
 }
