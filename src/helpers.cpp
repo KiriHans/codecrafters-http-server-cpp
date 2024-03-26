@@ -64,6 +64,7 @@ std::tuple<std::string, http_Code> load_from_file(const std::string &filename, s
             result_body += "\n";
         }
         result_body.erase(result_body.end() - 1, result_body.end());
+        
         myfile.close();
         return {result_body, OK};
     }

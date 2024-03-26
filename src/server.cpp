@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <regex>
 #include <unordered_map>
+#include <tuple>
 
 #include <sys/epoll.h>
 
@@ -131,9 +132,8 @@ bool handle_client(int client_fd, int epoll_fd, std::string & directory)
   {
     std::string filename = path_request.substr(path_request.find("/", 1) + 1);
 
-    auto [http_body_message, code]= load_from_file(filename, directory);
+    std::tie(http_body_message, code) = load_from_file(filename, directory);
 
-    std::cout << "code: " << code << std::endl;
 
     std::string size_filename_message = std::to_string(http_body_message.size());
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";
@@ -143,6 +143,9 @@ bool handle_client(int client_fd, int epoll_fd, std::string & directory)
     code = NOT_FOUND;
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
   }
+
+    std::cout << "code: " << http_body_message << std::endl;
+
 
   std::string response = http_status_message + "\r\n" + http_body_message;
 
