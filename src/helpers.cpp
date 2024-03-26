@@ -36,13 +36,14 @@ std::string load_from_file(const std::string &filename)
 {
     std::string line;
     std::string result_body = "";
-    
+
     std::ifstream myfile(filename);
 
     if (myfile.is_open())
     {
         while (getline(myfile, line)){
             result_body += line;
+            result_body += "\n";
         }
         myfile.close();
     }
