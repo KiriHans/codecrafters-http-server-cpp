@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <tuple>
 
-enum http_Code
+enum http_code
 {
     OK = 200,
     CREATED = 201,
@@ -49,7 +49,7 @@ inline void rtrim(std::string &string)
                  string.end());
 }
 
-std::tuple<std::string, http_Code> load_from_file(const std::string &filename, std::string &directory)
+std::tuple<std::string, http_code> load_from_file(const std::string &filename, std::string &directory)
 {
     std::string line;
     std::string result_body = "";
@@ -73,7 +73,7 @@ std::tuple<std::string, http_Code> load_from_file(const std::string &filename, s
     return {result_body, NOT_FOUND};
 }
 
-http_Code write_file(const std::string &filename, std::string &directory, std::string &content)
+http_code write_file(const std::string &filename, std::string &directory, std::string &content)
 {
     std::string full_path = directory + "/" + filename;
     std::vector<std::string> lines = split_string(content, "\n");

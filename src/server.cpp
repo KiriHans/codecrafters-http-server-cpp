@@ -22,9 +22,9 @@
 const int16_t BUFFER_SIZE = 1024;
 const int16_t MAX_EVENTS = 10;
 
-enum http_Code;
+enum http_code;
 
-std::unordered_map<http_Code, std::string> HTTP_MESSAGE = {
+std::unordered_map<http_code, std::string> HTTP_MESSAGE = {
     {OK, "HTTP/1.1 200 OK"},
     {NOT_FOUND, "HTTP/1.1 404 Not Found"},
     {CREATED, "HTTP/1.1 201 Created"}};
@@ -113,7 +113,7 @@ bool handle_client(int client_fd, int epoll_fd, std::string &directory)
   path_request = match_path[0];
   http_verb = match_http_verb[0];
 
-  http_Code code;
+  http_code code;
   std::string http_status_message;
   std::string http_body_message = "";
   std::string_view command = path_request.substr(0, path_request.find("/", 1));
