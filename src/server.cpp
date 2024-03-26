@@ -26,7 +26,8 @@ enum http_Code;
 
 std::unordered_map<http_Code, std::string> HTTP_MESSAGE = {
     {OK, "HTTP/1.1 200 OK"},
-    {NOT_FOUND, "HTTP/1.1 404 Not Found"}};
+    {NOT_FOUND, "HTTP/1.1 404 Not Found"},
+    {CREATED, "HTTP/1.1 201 Created"}};
 
 void set_nonblocking(int client_fd)
 {
@@ -48,7 +49,7 @@ void set_nonblocking(int client_fd)
   }
 }
 
-bool handle_client(int client_fd, int epoll_fd, std::string & directory)
+bool handle_client(int client_fd, int epoll_fd, std::string &directory)
 {
 
   char buffer[BUFFER_SIZE];
@@ -75,16 +76,21 @@ bool handle_client(int client_fd, int epoll_fd, std::string & directory)
   // std::cout << str_buffer << std::endl;  // Log to check request
 
   std::string path_request = "";
+  std::string http_verb = "";
   std::string user_agent_request = "";
+  std::string body_request = "";
 
-  std::smatch m;
-  std::regex e("/(\\S*)");
+  std::smatch match_path;
+  std::smatch match_http_verb;
+  std::regex regex_path("/(\\S*)");
+  std::regex regex_http_verb("^[A-Z]+");
 
   std::vector<std::string> request_array = split_string(str_buffer, "\r\n");
 
   std::string start_path = request_array[0];
 
-  for (int i = 0; i < request_array.size(); i++)
+  bool flag = false;
+  for (int i = 1; i < request_array.size(); i++)
   {
     const std::string request_line = request_array[i];
 
@@ -94,58 +100,82 @@ bool handle_client(int client_fd, int epoll_fd, std::string & directory)
 
       ltrim(user_agent_request);
     }
+
+    if(i == request_array.size() - 1){
+      body_request = request_line;
+    }
   }
 
-  std::regex_search(start_path, m, e);
+  std::cout << "content: " << body_request << " - " << std::endl;
 
-  path_request = m[0];
+  std::regex_search(start_path, match_path, regex_path);
+  std::regex_search(start_path, match_http_verb, regex_http_verb);
+
+  path_request = match_path[0];
+  http_verb = match_http_verb[0];
 
   http_Code code;
   std::string http_status_message;
   std::string http_body_message = "";
   std::string_view command = path_request.substr(0, path_request.find("/", 1));
 
-  if (command == "/")
+  if (http_verb == "GET")
   {
-    code = OK;
-    http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
+    if (command == "/")
+    {
+      code = OK;
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
+    }
+    else if (command == "/echo")
+    {
+      code = OK;
+
+      http_body_message = path_request.substr(path_request.find("/", 1) + 1);
+
+      std::string size_echo_message = std::to_string(http_body_message.size());
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_echo_message + "\r\n";
+    }
+    else if (command == "/user-agent")
+    {
+      code = OK;
+
+      http_body_message = user_agent_request;
+
+      std::string size_user_agent_message = std::to_string(http_body_message.size());
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_user_agent_message + "\r\n";
+    }
+    else if (command == "/files")
+    {
+      std::string filename = path_request.substr(path_request.find("/", 1) + 1);
+
+      std::tie(http_body_message, code) = load_from_file(filename, directory);
+
+      std::string size_filename_message = std::to_string(http_body_message.size());
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";
+    }
+    else
+    {
+      code = NOT_FOUND;
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
+    }
   }
-  else if (command == "/echo")
+  else if (http_verb == "POST")
   {
-    code = OK;
+    if (command == "/files")
+    {
+      std::string filename = path_request.substr(path_request.find("/", 1) + 1);
 
-    http_body_message = path_request.substr(path_request.find("/", 1) + 1);
+      code = write_file(filename, directory, body_request);
 
-    std::string size_echo_message = std::to_string(http_body_message.size());
-    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_echo_message + "\r\n";
+      std::string size_filename_message = std::to_string(http_body_message.size());
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";
+    }
+    else
+    {
+      code = NOT_FOUND;
+      http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
+    }
   }
-  else if (command == "/user-agent")
-  {
-    code = OK;
-
-    http_body_message = user_agent_request;
-
-    std::string size_user_agent_message = std::to_string(http_body_message.size());
-    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_user_agent_message + "\r\n";
-  }
-  else if (command == "/files")
-  {
-    std::string filename = path_request.substr(path_request.find("/", 1) + 1);
-
-    std::tie(http_body_message, code) = load_from_file(filename, directory);
-
-
-    std::string size_filename_message = std::to_string(http_body_message.size());
-    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";
-  }
-  else
-  {
-    code = NOT_FOUND;
-    http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
-  }
-
-    std::cout << "code: " << http_body_message << std::endl;
-
 
   std::string response = http_status_message + "\r\n" + http_body_message;
 
