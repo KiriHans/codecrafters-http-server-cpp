@@ -51,7 +51,7 @@ void set_nonblocking(int client_fd)
   }
 }
 
-bool handle_client(int client_fd, int epoll_fd)
+bool handle_client(int client_fd, int epoll_fd, std::string & directory)
 {
 
   char buffer[BUFFER_SIZE];
@@ -87,7 +87,6 @@ bool handle_client(int client_fd, int epoll_fd)
 
   std::string start_path = request_array[0];
 
-
   for (int i = 0; i < request_array.size(); i++)
   {
     const std::string request_line = request_array[i];
@@ -103,8 +102,6 @@ bool handle_client(int client_fd, int epoll_fd)
   std::regex_search(start_path, m, e);
 
   path_request = m[0];
-
-
 
   http_Code code;
   std::string http_status_message;
@@ -140,7 +137,7 @@ bool handle_client(int client_fd, int epoll_fd)
 
     std::string filename = path_request.substr(path_request.find("/", 1) + 1);
 
-    http_body_message = load_from_file(filename);
+    http_body_message = load_from_file(filename, directory);
 
     std::string size_filename_message = std::to_string(http_body_message.size());
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";
@@ -150,7 +147,6 @@ bool handle_client(int client_fd, int epoll_fd)
     code = NOT_FOUND;
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
   }
-  std::cout << http_body_message << std::endl;
 
   std::string response = http_status_message + "\r\n" + http_body_message;
 
@@ -271,7 +267,14 @@ int main(int argc, char **argv)
       }
       else
       {
-        handle_client(events[i].data.fd, epoll_fd);
+        std::string directory = "";
+
+        if (argc == 3)
+        {
+          directory = argv[2];
+        }
+
+        handle_client(events[i].data.fd, epoll_fd, directory);
       }
     }
   }

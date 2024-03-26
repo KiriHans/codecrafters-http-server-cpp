@@ -33,14 +33,13 @@ inline void ltrim(std::string &string)
                                               { return !std::isspace(ch); }));
 }
 
-std::string load_from_file(const std::string &filename)
+std::string load_from_file(const std::string &filename, std::string & directory)
 {
     std::string line;
     std::string result_body = "";
+    std::string full_path = directory + "/" + filename;
 
-    std::ifstream myfile(filename);
-
-    std::cout << "filename: " << std::filesystem::current_path() << std::endl;
+    std::ifstream myfile(full_path);
 
     if (myfile.is_open())
     {
