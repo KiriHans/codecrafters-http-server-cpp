@@ -13,15 +13,15 @@
 
 const int16_t BUFFER_SIZE = 1024;
 
-enum http_Code {
+enum http_Code
+{
   OK = 200,
   NOT_FOUND = 404
 };
 
-std::unordered_map<http_Code, std::string> HTTP_MESSAGE =  {
-  {OK, "HTTP/1.1 200 OK\r\n\r\n"},
-  {NOT_FOUND, "HTTP/1.1 404 Not Found\r\n\r\n"}
-};
+std::unordered_map<http_Code, std::string> HTTP_MESSAGE = {
+    {OK, "HTTP/1.1 200 OK"},
+    {NOT_FOUND, "HTTP/1.1 404 Not Found"}};
 
 bool handle_client(int server_fd, int client_fd)
 {
@@ -41,7 +41,7 @@ bool handle_client(int server_fd, int client_fd)
 
   std::string path_request = "";
   std::smatch m;
-  std::regex e("/([A-Za-z0-9]+(\\.[A-Za-z1]+)?){0,1}");
+  std::regex e("/([A-Za-z0-9\\-/]*)");
 
   for (int i = 0; i < str_buffer.size(); i++)
   {
@@ -53,26 +53,45 @@ bool handle_client(int server_fd, int client_fd)
         return -1;
       }
 
-      std::string start_path = str_buffer.substr(0, i-1);
+      std::string start_path = str_buffer.substr(0, i - 1);
 
       std::regex_search(start_path, m, e);
-      
+
       path_request = m[0];
 
       break;
     }
   }
 
-  http_Code code = path_request == "/" ? OK : NOT_FOUND;
- 
-  if(HTTP_MESSAGE.find(code) == HTTP_MESSAGE.end()){
-    std::cerr << "Code not found" << std::endl;
-    return -1;
+  http_Code code;
+  std::string http_status_message;
+  std::string http_body_message = "";
+
+  if (path_request == "/")
+  {
+    code = OK;
+    http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
+  }
+  else if (path_request.substr(0, 5) == "/echo")
+  {
+    code = OK;
+
+    http_body_message = path_request.substr(path_request.find("/", 1) + 1);
+
+    std::cout << "body: " << http_body_message << std::endl;
+
+    std::string size_echo_message = std::to_string(http_body_message.size());
+    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_echo_message + "\r\n";
+  }
+  else
+  {
+    code = NOT_FOUND;
+    http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
   }
 
-  std::string http_status_message = HTTP_MESSAGE.at(code);
+  std::string response = http_status_message + "\r\n" + http_body_message;
 
-  ssize_t server_send = send(client_fd, http_status_message.c_str(), http_status_message.size(), 0);
+  ssize_t server_send = send(client_fd, response.c_str(), response.size(), 0);
 
   if (server_send == -1)
   {
