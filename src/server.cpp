@@ -11,6 +11,8 @@
 #include <regex>
 #include <unordered_map>
 
+#include "helpers.cpp"
+
 const int16_t BUFFER_SIZE = 1024;
 
 enum http_Code
@@ -40,39 +42,63 @@ bool handle_client(int server_fd, int client_fd)
   // std::cout << str_buffer << std::endl;  // Log to check request
 
   std::string path_request = "";
+  std::string user_agent_request = "";
+  
   std::smatch m;
   std::regex e("/([A-Za-z0-9\\-/]*)");
 
-  for (int i = 0; i < str_buffer.size(); i++)
+  std::vector<std::string> request_array = split_string(str_buffer, "\r\n");
+
+  std::string start_path = request_array[0];
+
+  for (int i = 0; i < request_array.size(); i++)
   {
-    if (str_buffer[i] == '\n')
+    const std::string request_line = request_array[i];
+
+    if (request_line.find("User-Agent:") != std::string::npos)
     {
-      if (i - 1 > 0 && str_buffer[i - 1] != '\r')
-      {
-        std::cerr << "Incorrect request" << std::endl;
-        return -1;
-      }
+      user_agent_request = request_line.substr(request_line.find_first_not_of("User-Agent:"));
 
-      std::string start_path = str_buffer.substr(0, i - 1);
-
-      std::regex_search(start_path, m, e);
-
-      path_request = m[0];
-
-      break;
+      ltrim(user_agent_request);
     }
   }
+
+  std::regex_search(start_path, m, e);
+
+  path_request = m[0];
+
+  // for (int i = 0; i < str_buffer.size(); i++)
+  // {
+
+  //   if (str_buffer[i] == '\n')
+  //   {
+  //     if (i - 1 > 0 && str_buffer[i - 1] != '\r')
+  //     {
+  //       std::cerr << "Incorrect request" << std::endl;
+  //       return -1;
+  //     }
+
+  //     std::string start_path = str_buffer.substr(0, i - 1);
+
+  //     std::regex_search(start_path, m, e);
+
+  //     path_request = m[0];
+
+  //     break;
+  //   }
+  // }
 
   http_Code code;
   std::string http_status_message;
   std::string http_body_message = "";
+  std::string_view command = path_request.substr(0, path_request.find("/", 1));
 
-  if (path_request == "/")
+  if (command == "/")
   {
     code = OK;
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
   }
-  else if (path_request.substr(0, 5) == "/echo")
+  else if (command == "/echo")
   {
     code = OK;
 
@@ -82,6 +108,17 @@ bool handle_client(int server_fd, int client_fd)
 
     std::string size_echo_message = std::to_string(http_body_message.size());
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_echo_message + "\r\n";
+  }
+  else if (command == "/user-agent")
+  {
+    code = OK;
+
+    http_body_message = user_agent_request;
+
+    std::cout << "body: " << http_body_message << std::endl;
+
+    std::string size_user_agent_message = std::to_string(http_body_message.size());
+    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_user_agent_message + "\r\n";
   }
   else
   {
