@@ -49,5 +49,5 @@ std::string load_from_file(const std::string &filename)
     }
     else std::cout << "Unable to open file"; 
 
-    return result_body;
+    return result_body; 
 }
