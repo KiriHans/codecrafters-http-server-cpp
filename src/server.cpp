@@ -144,7 +144,7 @@ bool handle_client(int client_fd, int epoll_fd)
     http_body_message = load_from_file(filename);
 
     std::string size_filename_message = std::to_string(http_body_message.size());
-    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_filename_message + "\r\n";
+    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: application/octet-stream\r\n" + "Content-Length: " + size_filename_message + "\r\n";
   }
   else
   {
