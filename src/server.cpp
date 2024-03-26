@@ -106,7 +106,6 @@ bool handle_client(int client_fd, int epoll_fd, std::string &directory)
     }
   }
 
-  std::cout << "content: " << body_request << " - " << std::endl;
 
   std::regex_search(start_path, match_path, regex_path);
   std::regex_search(start_path, match_http_verb, regex_http_verb);

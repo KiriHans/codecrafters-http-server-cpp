@@ -81,12 +81,9 @@ http_Code write_file(const std::string &filename, std::string &directory, std::s
 
     if (myfile.is_open())
     {
-            std::cout << content << std::endl;
-            std::cout << lines.size() << std::endl;
 
         for (int i = 0; i < lines.size() - 1; i++)
         {
-            std::cout << lines[i] << std::endl;
             myfile << lines[i] << std::endl;
         }
 
