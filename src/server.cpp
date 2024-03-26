@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+
 #include <cstdlib>
 #include <string>
 #include <cstring>
@@ -58,7 +60,7 @@ bool handle_client(int client_fd, int epoll_fd)
 
   if (client_request <= 0)
   {
-     if (client_request == 0)
+    if (client_request == 0)
     {
       std::cerr << "Client closed the connection" << std::endl;
     }
@@ -79,11 +81,12 @@ bool handle_client(int client_fd, int epoll_fd)
   std::string user_agent_request = "";
 
   std::smatch m;
-  std::regex e("/([A-Za-z0-9\\-/]*)");
+  std::regex e("/(\\S*)");
 
   std::vector<std::string> request_array = split_string(str_buffer, "\r\n");
 
   std::string start_path = request_array[0];
+
 
   for (int i = 0; i < request_array.size(); i++)
   {
@@ -100,6 +103,9 @@ bool handle_client(int client_fd, int epoll_fd)
   std::regex_search(start_path, m, e);
 
   path_request = m[0];
+
+  std::cout << path_request << std::endl;
+
 
   http_Code code;
   std::string http_status_message;
@@ -128,6 +134,17 @@ bool handle_client(int client_fd, int epoll_fd)
 
     std::string size_user_agent_message = std::to_string(http_body_message.size());
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_user_agent_message + "\r\n";
+  }
+  else if (command == "/files")
+  {
+    code = OK;
+
+    std::string filename = path_request.substr(path_request.find("/", 1) + 1);
+
+    http_body_message = load_from_file(filename);
+
+    std::string size_filename_message = std::to_string(http_body_message.size());
+    http_status_message = HTTP_MESSAGE.at(code) + "\r\n" + "Content-Type: text/plain\r\n" + "Content-Length: " + size_filename_message + "\r\n";
   }
   else
   {
