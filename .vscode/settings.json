@@ -50,6 +50,7 @@
         "map": "cpp",
         "regex": "cpp",
         "sstream": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "chrono": "cpp"
     }
 }

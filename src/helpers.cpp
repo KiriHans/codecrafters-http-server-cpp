@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <filesystem>
 
 std::vector<std::string> split_string(const std::string_view &string, const std::string_view &delimiter)
 {
@@ -38,6 +39,8 @@ std::string load_from_file(const std::string &filename)
     std::string result_body = "";
 
     std::ifstream myfile(filename);
+
+    std::cout << "filename: " << std::filesystem::current_path() << std::endl;
 
     if (myfile.is_open())
     {
