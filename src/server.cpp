@@ -150,7 +150,7 @@ bool handle_client(int client_fd, int epoll_fd)
     code = NOT_FOUND;
     http_status_message = HTTP_MESSAGE.at(code) + "\r\n";
   }
-  std::cout << http_body_message << std::endl;
+  // std::cout << http_body_message << std::endl;
 
   std::string response = http_status_message + "\r\n" + http_body_message;
 
